@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   answerOne, describeAnswer, extractToken, newToken, parseAnswer, parseVerdict, renderApproval,
-  renderQuestion, sessionLabel, stripMentions,
+  renderQuestion, renderTextAsk, sessionLabel, stripMentions,
 } from '../lib/format.js'
 import { inQuietHours, resolveConfig } from '../lib/config.js'
 
@@ -137,4 +137,19 @@ test('config problems are reported instead of thrown, and notify-only stops poll
   const clamped = resolveConfig({ target: 'x', push: { robotCode: 'r' }, read: { pollSeconds: 0 }, behavior: { maxPending: 999 } })
   assert.equal(clamped.read.pollSeconds, 5)
   assert.equal(clamped.behavior.maxPending, 50)
+})
+test('a prose card carries the context, the ask and the reply grammar', () => {
+  const card = renderTextAsk({
+    token: 't7kd',
+    label: 'superagent-eval',
+    summary: '要我按这个修法派一个小 PR？',
+    context: '重启后实测：走的是评估路径。\n\ndeferred 里那两张工单已结束却仍被当作归属。',
+    where: '/Users/chenkai2/data1/www/htdocs/dsh-superagent-dingtalk',
+  })
+  assert.match(card.text, /等你回一句 · superagent-eval/)
+  assert.match(card.text, /工作目录：\/Users\/chenkai2/)
+  assert.match(card.text, /走的是评估路径/)
+  assert.match(card.text, /\*\*要你决定\*\*：要我按这个修法派一个小 PR？/)
+  assert.match(card.text, /#t7kd 你的答复/)
+  assert.ok(card.title.length <= 64)
 })

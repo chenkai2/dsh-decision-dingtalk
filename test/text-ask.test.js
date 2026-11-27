@@ -56,3 +56,29 @@ test('assistant text is collected from text blocks only', () => {
   assert.equal(assistantText({}), '')
   assert.equal(assistantText(undefined), '')
 })
+test('the card keeps the reasoning that led to the question', () => {
+  const text = [
+    '**重启后实测**',
+    '',
+    '| 项 | 结果 |',
+    '| 进程 | 20:02:10 启动，环境无 DSH_PROFILE_DIR |',
+    '| 我发的测试 | @陈凯 看一下 tap.e.weibo.com 这个项目的 README |',
+    '| 结果 | ❌ 仍被忽略，但路径不同：走的是评估路径 |',
+    '',
+    'deferred 里那两张工单已结束却仍被当作「这条消息可能属于它们」——这也值得一起修。',
+    '',
+    '要我按这个修法派一个小 PR（复合并发守卫到两条路径 + 结束工单不参与归属），还是你先在群里发一条消息确认不是我这里的发送方式导致的？',
+  ].join('\n')
+  const verdict = looksLikeAsk(text)
+  assert.equal(verdict.ask, true)
+  assert.match(verdict.context, /重启后实测/)
+  assert.match(verdict.context, /deferred 里那两张工单/)
+  assert.match(verdict.context, /要你|要我按这个修法/)
+  assert.ok(verdict.context.length <= 1200)
+})
+
+test('the question itself is kept as the one-line pointer', () => {
+  const verdict = looksLikeAsk('先修 A，再修 B。\n\n要不要我现在就派个小 PR？')
+  assert.match(verdict.summary, /要不要我现在就派个小 PR/)
+  assert.doesNotMatch(verdict.summary, /先修 A/)
+})

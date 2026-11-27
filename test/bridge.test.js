@@ -322,3 +322,39 @@ test('prose forwarding can be turned off', async () => {
   assert.equal(h.sends.length, 0)
   h.bridge.dispose()
 })
+
+test('a prose card carries the turn context and the working folder', async () => {
+  const sends = []
+  const listeners = new Map()
+  const cwd = '/Users/chenkai2/data1/www/htdocs/dsh-superagent-dingtalk'
+  const ctx = {
+    get: (name) => name === 'sessionController' ? { async prompt() {} } : undefined,
+    on(name, listener, options) { listeners.set(name, { listener, options }); return () => {} },
+  }
+  const config = resolveConfig({ target: 'oc_test', push: { robotCode: 'r' }, read: { mode: 'none' } })
+  const bridge = createBridge({
+    ctx,
+    config,
+    transport: { async send(message) { sends.push(message) }, async readNew(cursor) { return { messages: [], nextCursor: cursor } } },
+    logger,
+    now: () => new Date(2026, 10, 27, 12, 0),
+  })
+  const session = { id: 'session-f6026f2e', header: { cwd } }
+  listeners.get('session/event').listener(session, say(4, [
+    '重启后实测：走的是评估路径，不是 PR #4 的守卫。',
+    '',
+    'deferred 里那两张工单已结束却仍被当作归属，这也值得一起修。',
+    '',
+    '要我按这个修法派一个小 PR，还是你先在群里发一条消息确认？',
+  ].join('\n')))
+  listeners.get('session/event').listener(session, turnEnd(5))
+
+  await until(() => sends.length === 1)
+  const body = sends[0].text
+  assert.match(body, /走的是评估路径/)
+  assert.match(body, /deferred 里那两张工单/)
+  assert.match(body, /工作目录：\/Users\/chenkai2/)
+  // Without a title event the label falls back to the working folder, never a bare id.
+  assert.match(body, /dsh-superagent-dingtalk/)
+  bridge.dispose()
+})
