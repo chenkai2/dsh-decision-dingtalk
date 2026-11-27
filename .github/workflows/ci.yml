@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: 语法自检（每个运行时文件都要能被导入）
+        run: |
+          for f in index.js lib/*.js; do
+            node --check "$f"
+          done
+
+      - name: 测试
+        run: node --test test/
+
+      - name: 清单自检（打包产物里该有的都在）
+        run: |
+          npm pack --dry-run 2>&1 | tee /tmp/pack.txt
+          for want in index.js cordis.patch.yml locale/zh.json icon.svg docs/DETAIL.md LICENSE; do
+            grep -q " $want\$" /tmp/pack.txt || { echo "::error::打包产物缺少 $want"; exit 1; }
+          done
