@@ -11,8 +11,11 @@
 | 工具审批 | `approval/request` | 「🔔 需要你批准 · 会话名」+ 工具名 + 原因，回 `#a7k2 批准` / `#a7k2 拒绝` |
 | 计划待审 | `user-questions/request`（`plan-review` 意图） | 「❓ 需要你决定」+ 选项，回 `#q2x9 1` 或 `#q2x9 批准` |
 | 提问 | `user-questions/request` | 同上；没有选项时直接回文字就是答案 |
+| 文本里的「待确认」 | 回合结束时最后一条回复（如「要不要我现在发版？」「待确认 等你拍板」） | 「💬 等你回一句」+ 那句原话；你的答复会**作为一条新消息发进那个会话** |
 
 它**不替你做决定**：只是把已经在等你的那张卡复制一份到钉钉，两侧同时可答。
+
+第三行那类没有控件可挂：agent 只是把话问在文本里，然后回合结束。插件在 `turn/end` 时读最后一条回复，命中问句特征（问号结尾，或含「要不要 / 需要我 / 是否 / 请确认 / 待确认 / 等你拍板 / shall I / should I」这类措辞）就发一张卡；你在钉钉回的整段文字会经 `sessionController.prompt` 当作一条普通用户消息写进那个会话。你在工作台里自己回一句，对应那张卡立即作废。
 
 ## 安装
 
@@ -42,6 +45,8 @@ dsh plugin --profile web add /Users/chenkai2/data1/www/htdocs/dsh-decision-dingt
     behavior:
       answerInChat: true # false = 只提醒，裁决仍在工作台
       requireToken: true # 回复必须带 #token
+      textQuestions: true        # 也盯「文本里问的待确认」；false 只盯审批/提问控件
+      textQuestionMinutes: 180   # 这类卡最多等多久（分钟后自动作废）
 ```
 
 `push.mode: webhook` 时改用群自定义机器人：填 `webhookUrl`（含 `access_token`），有加签就填 `signingKey`，此时不需要 `robotCode`，也不需要 `dws`。

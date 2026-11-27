@@ -31,6 +31,10 @@
           # A reply must quote the token (#a7k2) unless exactly one request is pending.
           requireToken: true
           includeSubagents: false
+          # Turn endings that ask a decision in prose ("要不要我现在发版？") are
+          # forwarded too; a reply becomes an ordinary user message there.
+          textQuestions: true
+          textQuestionMinutes: 180
           maxPending: 6
           # 0 keeps waiting; a positive value gives up after that many minutes.
           expireMinutes: 0
