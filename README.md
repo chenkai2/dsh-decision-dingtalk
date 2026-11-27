@@ -65,7 +65,9 @@ dsh plugin --profile web add /Users/chenkai2/data1/www/htdocs/dsh-decision-dingt
 - 没有选项的提问：`#q2x9 你的答案`
 - 一张卡里有多问：`#q2x9 1; 今天上线`（每问一段，用 `;` 分隔）
 
-`behavior.requireToken: false` 时，如果**只有一个**请求在等你，可以只回「批准」。
+默认 `behavior.requireToken: false`：**只有一张卡在等时，群里直接回一句就认**；同时有两张以上时必须带 `#token`，否则插件会回你一行「这条不是答复：现在有 2 张卡在等你（#a… #q…）」而不是静默吞掉。
+
+`read.allowSenders` 要与 dws 实际回报的 id 对齐——它给的是 **openDingTalkId**（`DXiPwg5VW…`），不是 staffId（`11561`）；两个都填上最稳。填错时不再静默：日志会 warn 出这条消息实际携带的 id。
 
 ## 边界
 

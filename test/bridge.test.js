@@ -358,3 +358,66 @@ test('a prose card carries the turn context and the working folder', async () =>
   assert.match(body, /dsh-superagent-dingtalk/)
   bridge.dispose()
 })
+
+test('a message dropped by the allowlist is reported with the ids it carried', async () => {
+  const warned = []
+  const sends = []
+  const listeners = new Map()
+  const ctx = { get: () => undefined, on(name, listener) { listeners.set(name, { listener }); return () => {} } }
+  const config = resolveConfig({
+    target: 'oc_test', push: { robotCode: 'r' }, read: { mode: 'none', allowSenders: ['11561'] },
+  })
+  const bridge = createBridge({
+    ctx,
+    config,
+    transport: { async send(m) { sends.push(m) }, async readNew(c) { return { messages: [], nextCursor: c } } },
+    logger: { debug() {}, info() {}, warn: (...args) => warned.push(args.join(' ')), error() {} },
+    now: () => new Date(2026, 10, 27, 12, 0),
+  })
+  const decided = listeners.get('approval/request').listener({ agent, toolName: 'bash' }, never)
+  await until(() => sends.length === 1)
+
+  // dws reports the operator's openDingTalkId, not the staff id in the config.
+  await bridge.feed({ kind: 'user', text: `#${h_token(sends[0].text)} 批准`, senderIds: ['陈凯', 'DXiPwg5VWNUWUkiPlvHiPRo7IPYba46YLhmt'] })
+  assert.equal(bridge.pending(), 1)
+  await until(() => warned.length === 1)
+  assert.match(warned[0], /DXiPwg5VWNUWUkiPlvHiPRo7IPYba46YLhmt/)
+  assert.match(warned[0], /11561/)
+
+  await bridge.feed({ kind: 'user', text: `#${h_token(sends[0].text)} 批准`, senderIds: ['11561'] })
+  assert.equal(await decided, 'allowed-once')
+  bridge.dispose()
+})
+
+test('a reply that names no card gets one line back instead of silence', async () => {
+  const h = harness({ behavior: { requireToken: true } })
+  const first = h.approval.listener({ agent, toolName: 'bash' }, never)
+  await until(() => h.sends.length === 1)
+  const second = h.question.listener({ agent, questions: [{ id: 'q', question: '继续？', options: [{ label: '是' }, { label: '否' }] }] }, never)
+  await until(() => h.sends.length === 2)
+
+  await h.bridge.feed({ kind: 'user', text: '批准', senderIds: ['me'] })
+  await until(() => h.sends.length === 3)
+  assert.match(h.sends[2].title, /没有对上任何待决策/)
+  assert.equal(h.bridge.pending(), 2)
+
+  await h.bridge.feed({ kind: 'user', text: `#${h.tokenOf(0)} 批准`, senderIds: ['me'] })
+  assert.equal(await first, 'allowed-once')
+  await h.bridge.feed({ kind: 'user', text: `#${h.tokenOf(1)} 1`, senderIds: ['me'] })
+  assert.deepEqual(await second, { answers: [{ id: 'q', selected: ['是'] }] })
+  h.bridge.dispose()
+})
+
+test('a bare reply settles the only waiting card by default', async () => {
+  const h = harness()
+  const decided = h.approval.listener({ agent, toolName: 'bash' }, never)
+  await until(() => h.sends.length === 1)
+  await h.bridge.feed({ kind: 'user', text: '批准', senderIds: ['me'] })
+  assert.equal(await decided, 'allowed-once')
+  h.bridge.dispose()
+})
+
+/** Read the token out of a rendered card. */
+function h_token(text) {
+  return /#([a-z][0-9a-z]{1,4})\b/.exec(text)[1]
+}
