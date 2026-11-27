@@ -1,12 +1,33 @@
 {
   "name": "@chenkai114/dsh-decision-dingtalk",
   "version": "0.1.0",
-  "private": true,
   "description": "Forwards decisions that other DSH sessions are waiting on to DingTalk, and answers them from the chat.",
-  "type": "module",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chenkai2/dsh-decision-dingtalk.git"
+  },
+  "homepage": "https://github.com/chenkai2/dsh-decision-dingtalk#readme",
+  "bugs": {
+    "url": "https://github.com/chenkai2/dsh-decision-dingtalk/issues"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "dingtalk",
+    "dws",
+    "approval",
+    "notification",
+    "decisions"
+  ],
+  "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22",
+    "dsh": "^0.2.1-alpha.2"
   },
   "exports": {
     ".": "./index.js",

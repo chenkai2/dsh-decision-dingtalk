@@ -17,6 +17,9 @@
 ## 安装
 
 ```sh
+# 从 npm（registry 由仓库根的 .npmrc 锁定到 registry.npmjs.org）
+dsh plugin --profile web add @chenkai114/dsh-decision-dingtalk
+# 或从本机源码
 dsh plugin --profile web add /Users/chenkai2/data1/www/htdocs/dsh-decision-dingtalk
 ```
 
