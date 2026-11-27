@@ -44,7 +44,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test test/",
+    "test": "node --test test/*.test.js",
     "prepublishOnly": "node -e \"const ci=process.env.GITHUB_ACTIONS;const dry=String(process.env.npm_config_dry_run||'')==='true';const boot=process.env.ALLOW_FIRST_PUBLISH==='1';if(ci)process.exit(0);if(dry)process.exit(0);if(boot){console.warn('\\n[首次发布] 允许本地发布一次：npm 上还没有这个包，Trusted Publisher 无处可配。');console.warn('  发完立刻去包设置里配 Trusted Publisher，之后只走 GitHub Release。\\n');process.exit(0);}console.error('\\n[拒绝发布] 本包只通过 GitHub Release + npm Trusted Publishing 发布。');console.error('  首次上架例外：ALLOW_FIRST_PUBLISH=1 npm publish --access public');console.error('  其余情况：升版本 → 提交 → 发 GitHub Release（tag=v<version>）→ 等 Actions 完成。\\n');process.exit(1)\""
   },
   "dsh": {

@@ -68,7 +68,7 @@ jobs:
 
       - name: 测试
         # 纯 Node 测试，没有依赖要装；node --test 直接用内置 runner。
-        run: node --test test/
+        run: node --test test/*.test.js
 
       - name: 发布（scoped 包，access public）
         run: |

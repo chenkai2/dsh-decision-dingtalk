@@ -33,7 +33,7 @@ jobs:
           done
 
       - name: 测试
-        run: node --test test/
+        run: node --test test/*.test.js
 
       - name: 清单自检（打包产物里该有的都在）
         run: |
