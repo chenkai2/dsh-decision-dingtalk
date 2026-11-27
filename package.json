@@ -1,6 +1,6 @@
 {
   "name": "@chenkai114/dsh-decision-dingtalk",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Forwards decisions that other DSH sessions are waiting on to DingTalk, and answers them from the chat.",
   "license": "MIT",
   "publishConfig": {

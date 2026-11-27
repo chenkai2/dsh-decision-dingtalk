@@ -60,6 +60,15 @@ dsh plugin --profile web add /Users/chenkai2/data1/www/htdocs/dsh-decision-dingt
 
 `dws chat message list --user <自己>` 读到的是「和自己的私聊」，读不到机器人单聊会话——所以私聊目标只能单向通知，回复收不回来。群聊两个方向都通，因此推荐建一个只有你 + 机器人的小群（`dws chat +chat-create --name "DSH 决策通道" --bots <robotCode> --yes`）当决策通道。
 
+## 设置界面
+
+设置 → 「等你决策 · 钉钉」：
+
+- **环境检查**：`dws --version` 与 `dws auth status --readonly`（只读本地快照，不联网）——打开面板时先画表单，这项在后台补上；未安装或未登录会直接给出该跑的命令。
+- **目标群 / 机器人**：从 `dws chat +chat-list`、`dws chat bot search` 现查现选，不用手填 id。
+- **行为开关**：群里直接裁决、裸回复、文本待确认、完成通知、子代理、轮询间隔、允许发送者。
+- **测试发送**：当场验证通道，失败原因显示在页面上。
+
 ## 回复语法
 
 - 审批：`#a7k2 批准` / `#a7k2 拒绝`（也认 同意 / 允许 / 通过 / ok / yes / 1，拒绝侧同理）
