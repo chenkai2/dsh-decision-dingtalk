@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Decisions to DingTalk",
+    "description": "Forwards the approvals and questions that sessions are waiting on to DingTalk and settles them from a chat reply, whichever of the chat and the workstation answers first.",
+    "detail": "docs/DETAIL.md"
+  }
+}

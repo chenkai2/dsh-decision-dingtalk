@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Decision bridge">
+  <defs>
+    <linearGradient id="db-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f6df6"/>
+      <stop offset="1" stop-color="#12a3a3"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#db-bg)"/>
+  <path d="M32 14c-7.7 0-14 5.2-14 11.6 0 3.6 2 6.9 5.2 9v5.1c0 1 1.2 1.6 2 0.9l4.4-3.5c0.8 0.1 1.6 0.2 2.4 0.2 7.7 0 14-5.2 14-11.7S39.7 14 32 14z"
+        fill="#ffffff" opacity="0.95"/>
+  <circle cx="25" cy="44" r="8.5" fill="#0f1a2b"/>
+  <path d="M25 39.4c0.5-0.6 1.5-0.2 1.4 0.6l-0.4 2.6h2.2c0.6 0 1 0.6 0.8 1.1l-3.1 5.2c-0.4 0.7-1.5 0.3-1.4-0.5l0.4-2.7h-2.1c-0.6 0-1-0.6-0.8-1.1l3-5.2z"
+        fill="#ffd166"/>
+  <circle cx="44" cy="45" r="3.4" fill="#ffffff" opacity="0.85"/>
+</svg>

@@ -1,0 +1,40 @@
+- insert:
+    - id: decision-dingtalk
+      name: '@chenkai114/dsh-decision-dingtalk'
+      config:
+        enabled: true
+        # Where decisions land, and where replies are read from.
+        # kind: group (openConversationId) or user (userId).
+        target:
+          kind: group
+          id: ''
+        push:
+          # dws      -> `dws chat message send-by-bot` (needs robotCode)
+          # webhook  -> a group custom robot (access_token, optional signingKey)
+          mode: dws
+          dws: dws
+          robotCode: ''
+          webhookUrl: ''
+          signingKey: ''
+          atUserIds: []
+        read:
+          # dws -> `dws chat message list` as the operator, cursor advanced per poll
+          mode: dws
+          dws: dws
+          pollSeconds: 15
+          # Empty accepts every person in the target conversation; a robot never counts.
+          allowSenders: []
+        behavior:
+          # true: a reply in DingTalk settles the request in place.
+          # false: DingTalk only notifies; the workstation stays the decision surface.
+          answerInChat: true
+          # A reply must quote the token (#a7k2) unless exactly one request is pending.
+          requireToken: true
+          includeSubagents: false
+          maxPending: 6
+          # 0 keeps waiting; a positive value gives up after that many minutes.
+          expireMinutes: 0
+          quietHours:
+            enabled: false
+            start: '23:00'
+            end: '08:00'
