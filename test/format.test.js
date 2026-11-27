@@ -112,10 +112,11 @@ test('an answer summary names what was chosen', () => {
 
 test('quiet hours cover a window across midnight', () => {
   const range = { enabled: true, start: '23:00', end: '08:00' }
-  assert.equal(inQuietHours(range, new Date('2026-11-27T23:30:00+08:00')), true)
-  assert.equal(inQuietHours(range, new Date('2026-11-27T03:00:00+08:00')), true)
-  assert.equal(inQuietHours(range, new Date('2026-11-27T12:00:00+08:00')), false)
-  assert.equal(inQuietHours({ ...range, enabled: false }, new Date('2026-11-27T23:30:00+08:00')), false)
+  // Quiet hours are read on the Host's own clock, so build these instants locally.
+  assert.equal(inQuietHours(range, new Date(2026, 10, 27, 23, 30)), true)
+  assert.equal(inQuietHours(range, new Date(2026, 10, 27, 3, 0)), true)
+  assert.equal(inQuietHours(range, new Date(2026, 10, 27, 12, 0)), false)
+  assert.equal(inQuietHours({ ...range, enabled: false }, new Date(2026, 10, 27, 23, 30)), false)
 })
 
 test('config problems are reported instead of thrown, and notify-only stops polling', () => {

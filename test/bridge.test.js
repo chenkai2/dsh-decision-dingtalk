@@ -42,7 +42,7 @@ function harness(overrides = {}) {
     read: { mode: 'none' },
     ...overrides,
   })
-  const bridge = createBridge({ ctx, config, transport, logger, now: () => new Date('2026-11-27T12:00:00+08:00') })
+  const bridge = createBridge({ ctx, config, transport, logger, now: () => new Date(2026, 10, 27, 12, 0) })
   return {
     bridge,
     sends,
@@ -224,7 +224,7 @@ test('quiet hours keep a request in the workstation', async () => {
     config,
     transport: { async send(message) { sends.push(message) }, async readNew(cursor) { return { messages: [], nextCursor: cursor } } },
     logger,
-    now: () => new Date('2026-11-27T12:00:00+08:00'),
+    now: () => new Date(2026, 10, 27, 12, 0),
   })
   const decided = listeners.get('approval/request')({ agent, toolName: 'bash' }, never)
   await new Promise(resolve => setTimeout(resolve, 20))
