@@ -35,6 +35,7 @@ window.__ModuleLoader__.load({
       ok: { color: 'var(--dsw-alias-state-success-primary)' },
       bad: { color: 'var(--dsw-alias-state-error-primary)' },
       warn: { color: 'var(--dsw-alias-state-warn-primary)' },
+      memberList: { display: 'grid', gap: 6, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--dsw-alias-border-l1)' },
       kv: { display: 'grid', gridTemplateColumns: 'max-content 1fr', gap: '4px 12px', fontSize: 12 },
       key: { color: 'var(--dsw-alias-label-secondary)' },
       value: { color: 'var(--dsw-alias-label-primary)', wordBreak: 'break-all' },
@@ -72,6 +73,7 @@ window.__ModuleLoader__.load({
       const [status, setStatus] = React.useState(null)
       const [options, setOptions] = React.useState(null)
       const [probe, setProbe] = React.useState(null)
+      const [members, setMembers] = React.useState(null)
       const [form, setForm] = React.useState(null)
       const [note, setNote] = React.useState(null)
       const [busy, setBusy] = React.useState(false)
@@ -85,7 +87,7 @@ window.__ModuleLoader__.load({
           targetId: next.config.target.id,
           robotCode: next.config.push.robotCode,
           pollSeconds: next.config.read.pollSeconds,
-          allowSenders: next.config.read.allowSenders.join(', '),
+          allowSenders: [...next.config.read.allowSenders],
           answerInChat: next.config.behavior.answerInChat,
           requireToken: next.config.behavior.requireToken,
           textQuestions: next.config.behavior.textQuestions,
@@ -100,6 +102,16 @@ window.__ModuleLoader__.load({
         call('/probe').then(setProbe).catch(error => setProbe({ error: String(error.message ?? error) }))
         call('/options').then(setOptions).catch(() => setOptions({ groups: [], bots: [] }))
       }, [load])
+
+      React.useEffect(() => {
+        if (form === null || form.targetId === '') return
+        let live = true
+        setMembers(null)
+        call(`/members?group=${encodeURIComponent(form.targetId)}`)
+          .then(next => { if (live) setMembers(next.users ?? []) })
+          .catch(() => { if (live) setMembers([]) })
+        return () => { live = false }
+      }, [form?.targetId])
 
       if (form === null) {
         return h('div', { style: S.page },
@@ -130,7 +142,7 @@ window.__ModuleLoader__.load({
               push: { robotCode: form.robotCode },
               read: {
                 pollSeconds: Number(form.pollSeconds),
-                allowSenders: form.allowSenders.split(/[,，\s]+/u).map(item => item.trim()).filter(Boolean),
+                allowSenders: form.allowSenders,
               },
               behavior: {
                 answerInChat: form.answerInChat,
@@ -224,13 +236,31 @@ window.__ModuleLoader__.load({
               onChange: event => patch('pollSeconds')(event.target.value),
             })),
           h(Row, {
-            label: '允许的发送者',
-            hint: '留空表示目标群里任何真人都算；dws 回报的是 openDingTalkId，不是 staffId，两个都填最稳。',
-          }, h('input', {
-            style: S.input, value: form.allowSenders,
-            onChange: event => patch('allowSenders')(event.target.value),
-            placeholder: 'DXiPwg5VW…, 11561',
-          })),
+            label: '谁可以在群里替你拍板',
+            hint: '不勾任何人 = 这个群里所有真人都算。勾了之后只认这些人。',
+          },
+          members === null
+            ? h('p', { style: S.hint }, '正在读取群成员…')
+            : members.length === 0
+              ? h('p', { style: S.hint }, '没读到成员列表；不改这一项就按「任何人」处理。')
+              : h('div', { style: S.memberList },
+                members.map(member => h('label', { key: member.id, style: S.check },
+                  h('input', {
+                    type: 'checkbox',
+                    checked: form.allowSenders.includes(member.id),
+                    onChange: event => {
+                      const next = event.target.checked
+                        ? [...form.allowSenders, member.id]
+                        : form.allowSenders.filter(id => id !== member.id)
+                      patch('allowSenders')(next)
+                    },
+                  }),
+                  h('span', null, `${member.name}${member.role ? `（${member.role}）` : ''}`)))),
+          members !== null && members.length > 0
+            ? h('p', { style: S.hint }, form.allowSenders.length === 0
+              ? '当前：任何人'
+              : `当前：${members.filter(m => form.allowSenders.includes(m.id)).map(m => m.name).join('、') || '（已勾选的人不在这个群里）'}`)
+            : null),
           h(Check, { label: '在群里直接回复就裁决', checked: form.answerInChat, onChange: patch('answerInChat') }),
           h(Check, { label: '只有一张卡在等时也允许不带 #token 的裸回复', checked: !form.requireToken, onChange: value => patch('requireToken')(!value) }),
           h(Check, { label: '也转发「文本里问的待确认」', checked: form.textQuestions, onChange: patch('textQuestions') }),

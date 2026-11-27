@@ -66,7 +66,8 @@ dsh plugin --profile web add /Users/chenkai2/data1/www/htdocs/dsh-decision-dingt
 
 - **环境检查**：`dws --version` 与 `dws auth status --readonly`（只读本地快照，不联网）——打开面板时先画表单，这项在后台补上；未安装或未登录会直接给出该跑的命令。
 - **目标群 / 机器人**：从 `dws chat +chat-list`、`dws chat bot search` 现查现选，不用手填 id。
-- **行为开关**：群里直接裁决、裸回复、文本待确认、完成通知、子代理、轮询间隔、允许发送者。
+- **谁可以替你拍板**：从群成员列表里按名字勾选（`dws chat +chat-members-list`），不勾就是「这个群里任何真人」；不需要手填 openDingTalkId。
+- **行为开关**：群里直接裁决、裸回复、文本待确认、完成通知、子代理、轮询间隔。
 - **测试发送**：当场验证通道，失败原因显示在页面上。
 
 ## 回复语法
