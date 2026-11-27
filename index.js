@@ -38,7 +38,8 @@ export function apply(ctx, rawConfig) {
     // The settings routes need the host web server. Mount them through an
     // optional child so a composition without one still runs the bridge.
     const mount = (scope) => scope.effect(() => registerHostApi({
-      ctx: scope,
+      // The plugin's own context: `ctx.fiber.entry` is the config row the editor writes.
+      ctx,
       webServer: scope.webServer,
       config: () => config,
       logger,
