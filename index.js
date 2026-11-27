@@ -35,25 +35,22 @@ export function apply(ctx, rawConfig) {
       ? undefined
       : createBridge({ ctx, config, transport: createTransport(config, logger), logger })
 
-    const webServer = ctx.get('webServer')
-    const disposeApi = webServer === undefined
-      ? () => {}
-      : registerHostApi({
-          ctx,
-          webServer,
-          config: () => config,
-          logger,
-          pending: () => bridge?.pending() ?? 0,
-          sendTest: async (text) => {
-            if (bridge === undefined) return { ok: false, error: `还不能发送：${config.problems.join('；') || '插件未启用'}` }
-            return bridge.sendTest(text)
-          },
-          pluginName: PACKAGE_NAME,
-        })
+    // The settings routes need the host web server. Mount them through an
+    // optional child so a composition without one still runs the bridge.
+    const mount = (scope) => scope.effect(() => registerHostApi({
+      ctx: scope,
+      webServer: scope.webServer,
+      config: () => config,
+      logger,
+      pending: () => bridge?.pending() ?? 0,
+      sendTest: async (text) => {
+        if (bridge === undefined) return { ok: false, error: `还不能发送：${config.problems.join('；') || '插件未启用'}` }
+        return bridge.sendTest(text)
+      },
+      pluginName: PACKAGE_NAME,
+    }), 'decision-dingtalk: settings routes')
+    ctx.inject(['webServer'], mount)
 
-    return () => {
-      disposeApi()
-      bridge?.dispose()
-    }
+    return () => { bridge?.dispose() }
   }, 'decision-dingtalk: bridge and settings routes')
 }

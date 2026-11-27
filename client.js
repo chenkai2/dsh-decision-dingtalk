@@ -96,13 +96,21 @@ window.__ModuleLoader__.load({
       }, [])
 
       React.useEffect(() => {
-        load().catch(error => setNote({ ok: false, text: String(error.message ?? error) }))
+        load().catch(error => setNote({ ok: false, text: `读取失败：${String(error.message ?? error)}` }))
         call('/probe').then(setProbe).catch(error => setProbe({ error: String(error.message ?? error) }))
         call('/options').then(setOptions).catch(() => setOptions({ groups: [], bots: [] }))
       }, [load])
 
       if (form === null) {
-        return h('div', { style: S.page }, h('p', { style: S.hint }, '正在读取配置…'))
+        return h('div', { style: S.page },
+          h('p', { style: { ...S.hint, ...(note === null ? {} : S.bad) } }, note === null ? '正在读取配置…' : note.text),
+          note === null ? null : h('div', { style: S.actions },
+            h('button', { style: S.button, onClick: () => {
+              setNote(null)
+              load().catch(error => setNote({ ok: false, text: `读取失败：${String(error.message ?? error)}` }))
+            } }, '重试')),
+          note === null ? null : h('p', { style: S.hint },
+            '如果一直是 404，说明插件的路由没挂上——重启 dsh web 后再试，并把这段报错发我。'))
       }
 
       const patch = field => value => setForm(current => ({ ...current, [field]: value }))
