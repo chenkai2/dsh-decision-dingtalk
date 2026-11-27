@@ -11,6 +11,7 @@
 | 工具审批 | `approval/request` | 「🔔 需要你批准 · 会话名」+ 工具名 + 原因，回 `#a7k2 批准` / `#a7k2 拒绝` |
 | 计划待审 | `user-questions/request`（`plan-review` 意图） | 「❓ 需要你决定」+ 选项，回 `#q2x9 1` 或 `#q2x9 批准` |
 | 提问 | `user-questions/request` | 同上；没有选项时直接回文字就是答案 |
+| 跑完了 / 跑失败了 | `turn/end`（completed / error / max-tokens） | 「✅ 跑完了」+ 耗时 + 结尾摘要，**不需要回复**；失败的带错误原文 |
 | 文本里的「待确认」 | 回合结束时最后一条回复（如「要不要我现在发版？」「待确认 等你拍板」） | 「💬 等你回一句」+ **该回合收盘那一段原文**（约 1200 字）+ 工作目录 + 会话名；你的答复会**作为一条新消息发进那个会话** |
 
 它**不替你做决定**：只是把已经在等你的那张卡复制一份到钉钉，两侧同时可答。
@@ -47,6 +48,8 @@ dsh plugin --profile web add /Users/chenkai2/data1/www/htdocs/dsh-decision-dingt
       requireToken: true # 回复必须带 #token
       textQuestions: true        # 也盯「文本里问的待确认」；false 只盯审批/提问控件
       textQuestionMinutes: 180   # 这类卡最多等多久（分钟后自动作废）
+      completionNotify: true     # 跑完了也发一条（不需要回复）
+      completionMinSeconds: 10   # 只发跑超过这么多秒的轮次；0 = 每轮都发
 ```
 
 `push.mode: webhook` 时改用群自定义机器人：填 `webhookUrl`（含 `access_token`），有加签就填 `signingKey`，此时不需要 `robotCode`，也不需要 `dws`。

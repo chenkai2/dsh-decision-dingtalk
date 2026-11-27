@@ -421,3 +421,72 @@ test('a bare reply settles the only waiting card by default', async () => {
 function h_token(text) {
   return /#([a-z][0-9a-z]{1,4})\b/.exec(text)[1]
 }
+
+const at = (seq, time) => ({ type: 'assistant/message', seq, time, data: { message: { content: [{ type: 'text', text: '都做完了。' }] } } })
+const start = (turn, time) => ({ type: 'turn/start', seq: 0, time, data: { turn } })
+const end = (turn, time, kind = 'completed', extra = {}) => ({ type: 'turn/end', seq: 0, time, data: { turn, reason: { kind, ...extra } } })
+
+test('a finished turn is announced without asking for an answer', async () => {
+  const h = harness()
+  h.commit('sess-1', start(1, 1_000))
+  h.commit('sess-1', at(1, 40_000))
+  h.commit('sess-1', end(1, 61_000))
+  await until(() => h.sends.length === 1)
+  const body = h.sends[0].text
+  assert.match(body, /✅ 跑完了/)
+  assert.match(body, /本轮耗时：1 分 0 秒/)
+  assert.match(body, /都做完了/)
+  assert.match(body, /不需要回复/)
+  assert.doesNotMatch(body, /#[a-z][0-9a-z]{1,4}/)
+  h.bridge.dispose()
+})
+
+test('a short turn stays quiet by default', async () => {
+  const h = harness()
+  h.commit('sess-1', start(1, 1_000))
+  h.commit('sess-1', at(1, 2_000))
+  h.commit('sess-1', end(1, 3_000))
+  await new Promise(resolve => setTimeout(resolve, 20))
+  assert.equal(h.sends.length, 0)
+  h.bridge.dispose()
+})
+
+test('a failed turn says why', async () => {
+  const h = harness()
+  h.commit('sess-1', start(1, 1_000))
+  h.commit('sess-1', end(1, 60_000, 'error', { error: { message: 'provider said no' } }))
+  await until(() => h.sends.length === 1)
+  assert.match(h.sends[0].text, /❌ 跑失败了/)
+  assert.match(h.sends[0].text, /provider said no/)
+  h.bridge.dispose()
+})
+
+test('a cancelled turn is not announced', async () => {
+  const h = harness()
+  h.commit('sess-1', start(1, 1_000))
+  h.commit('sess-1', end(1, 60_000, 'aborted'))
+  await new Promise(resolve => setTimeout(resolve, 20))
+  assert.equal(h.sends.length, 0)
+  h.bridge.dispose()
+})
+
+test('a turn that already asked a decision does not also announce completion', async () => {
+  const h = harness({ behavior: { completionMinSeconds: 0 } })
+  h.commit('sess-1', start(1, 1_000))
+  h.commit('sess-1', say(2, '要我发版吗？'))
+  h.commit('sess-1', end(1, 60_000))
+  await until(() => h.sends.length === 1)
+  await new Promise(resolve => setTimeout(resolve, 30))
+  assert.equal(h.sends.length, 1)
+  assert.match(h.sends[0].text, /等你回一句/)
+  h.bridge.dispose()
+})
+
+test('completion notices can be turned off', async () => {
+  const h = harness({ behavior: { completionNotify: false, completionMinSeconds: 0 } })
+  h.commit('sess-1', start(1, 1_000))
+  h.commit('sess-1', end(1, 60_000))
+  await new Promise(resolve => setTimeout(resolve, 20))
+  assert.equal(h.sends.length, 0)
+  h.bridge.dispose()
+})

@@ -71,12 +71,14 @@ window.__ModuleLoader__.load({
     function Panel() {
       const [status, setStatus] = React.useState(null)
       const [options, setOptions] = React.useState(null)
+      const [probe, setProbe] = React.useState(null)
       const [form, setForm] = React.useState(null)
       const [note, setNote] = React.useState(null)
       const [busy, setBusy] = React.useState(false)
 
       const load = React.useCallback(async () => {
-        const next = await call('/status')
+        // The config read is in-process; the dws check shells out, so it arrives later.
+        const next = await call('/config')
         setStatus(next)
         setForm({
           kind: next.config.target.kind,
@@ -87,12 +89,15 @@ window.__ModuleLoader__.load({
           answerInChat: next.config.behavior.answerInChat,
           requireToken: next.config.behavior.requireToken,
           textQuestions: next.config.behavior.textQuestions,
+          completionNotify: next.config.behavior.completionNotify,
+          completionMinSeconds: next.config.behavior.completionMinSeconds,
           includeSubagents: next.config.behavior.includeSubagents,
         })
       }, [])
 
       React.useEffect(() => {
         load().catch(error => setNote({ ok: false, text: String(error.message ?? error) }))
+        call('/probe').then(setProbe).catch(error => setProbe({ error: String(error.message ?? error) }))
         call('/options').then(setOptions).catch(() => setOptions({ groups: [], bots: [] }))
       }, [load])
 
@@ -123,6 +128,8 @@ window.__ModuleLoader__.load({
                 answerInChat: form.answerInChat,
                 requireToken: form.requireToken,
                 textQuestions: form.textQuestions,
+                completionNotify: form.completionNotify,
+                completionMinSeconds: Number(form.completionMinSeconds),
                 includeSubagents: form.includeSubagents,
               },
             }),
@@ -151,12 +158,13 @@ window.__ModuleLoader__.load({
         }
       }
 
-      const dws = status?.dws ?? { installed: false }
+      const dws = probe?.dws
       return h('div', { style: S.page },
 
         h('div', { style: S.section },
           h('h3', { style: S.title }, '环境检查'),
-          h('div', { style: S.kv },
+          dws === undefined ? h('p', { style: S.hint }, probe?.error ? `检查失败：${probe.error}` : '正在检查 dws…') : null,
+          dws === undefined ? null : h('div', { style: S.kv },
             h('span', { style: S.key }, 'dws'),
             h('span', { style: { ...S.value, ...(dws.installed ? S.ok : S.bad) } },
               dws.installed ? `已安装 ${dws.version ?? ''}` : `未找到（${dws.path ?? 'dws'}）`),
@@ -165,9 +173,9 @@ window.__ModuleLoader__.load({
               dws.loggedIn ? `已登录，凭证有效期至 ${String(dws.expiresAt ?? '未知').slice(0, 19)}` : '未登录或凭证已过期'),
             h('span', { style: S.key }, '当前等待'),
             h('span', { style: S.value }, `${status?.pending ?? 0} 条`)),
-          h('p', { style: S.hint },
+          dws === undefined ? null : h('p', { style: S.hint },
             '双向收发（推卡片 + 读回复）依赖本机 dws；只用 webhook 推送时可以不用 dws，但也收不到回复。'),
-          dws.installed ? null : h('p', { style: { ...S.hint, ...S.bad } }, '请先安装并登录 dws：`dws auth login`。')),
+          dws === undefined || dws.installed ? null : h('p', { style: { ...S.hint, ...S.bad } }, '请先安装并登录 dws：`dws auth login`。')),
 
         h('div', { style: S.section },
           h('h3', { style: S.title }, '目标会话'),
@@ -218,12 +226,23 @@ window.__ModuleLoader__.load({
           h(Check, { label: '在群里直接回复就裁决', checked: form.answerInChat, onChange: patch('answerInChat') }),
           h(Check, { label: '只有一张卡在等时也允许不带 #token 的裸回复', checked: !form.requireToken, onChange: value => patch('requireToken')(!value) }),
           h(Check, { label: '也转发「文本里问的待确认」', checked: form.textQuestions, onChange: patch('textQuestions') }),
+          h(Check, { label: '跑完了也发一条（不需要回复）', checked: form.completionNotify, onChange: patch('completionNotify') }),
+          h(Row, { label: '只在跑超过多少秒的轮次发完成通知', hint: '0 表示每轮都发；失败的轮次不受这个门槛限制。' },
+            h('input', {
+              style: S.input, type: 'number', min: 0, max: 3600, value: form.completionMinSeconds,
+              onChange: event => patch('completionMinSeconds')(event.target.value),
+            })),
           h(Check, { label: '子代理会话也转发', checked: form.includeSubagents, onChange: patch('includeSubagents') })),
 
         h('div', { style: S.actions },
           h('button', { style: { ...S.button, ...S.primary }, disabled: busy, onClick: save }, busy ? '保存中…' : '保存'),
           h('button', { style: S.button, disabled: busy, onClick: test }, '测试发送'),
-          h('button', { style: S.button, disabled: busy, onClick: () => { void load() } }, '重新读取')),
+          h('button', { style: S.button, disabled: busy, onClick: () => {
+            void load()
+            setProbe(null)
+            call('/probe').then(setProbe).catch(error => setProbe({ error: String(error.message ?? error) }))
+            call('/options').then(setOptions).catch(() => setOptions({ groups: [], bots: [] }))
+          } }, '重新读取')),
 
         note === null ? null : h('p', { style: { ...S.state, ...(note.ok ? S.ok : S.bad) } }, note.text),
 
