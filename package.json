@@ -40,7 +40,8 @@
     "cordis.patch.yml",
     "locale/*.json",
     "docs",
-    "icon.svg"
+    "icon.svg",
+    "LICENSE"
   ],
   "scripts": {
     "test": "node --test test/"
